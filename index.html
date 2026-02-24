@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>JSOC SUITE</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.jpg">
+    <link rel="icon" type="image/jpeg" href="apple-touch-icon.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --g0:#000; --g1:#0a0a0a; --g2:#111; --g4:#0d1f0d;
+            --gc:#00cc44; --gd:#009933; --gl:#00ff66; --gm:#1a3a1a; --gt:#071407;
+            --tx:#bbddbb; --txd:#446644; --red:#cc3322;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+        textarea,input{-webkit-user-select:text;user-select:text;}
+        html,body{height:100%;overflow:hidden;background:var(--g0);color:var(--tx);font-family:'Rajdhani',sans-serif;font-size:16px;}
+
+        /* PAGES */
+        .page{display:none;height:100vh;flex-direction:column;overflow:hidden;}
+        .page.active{display:flex;}
+        .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+        /* TOPBAR */
+        .topbar{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--gm);background:var(--g1);flex-shrink:0;}
+        .topbar-title{font-family:'Share Tech Mono',monospace;color:var(--gc);font-size:.95rem;letter-spacing:2px;text-transform:uppercase;}
+        .back-btn{background:none;border:1px solid var(--gm);color:var(--gc);font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:6px 11px;border-radius:3px;cursor:pointer;letter-spacing:1px;flex-shrink:0;}
+        .back-btn:active{background:var(--gm);}
+
+        /* HOME */
+        .home-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px 24px;gap:44px;}
+        .home-logo{text-align:center;}
+        .home-logo h1{font-family:'Share Tech Mono',monospace;color:var(--gl);font-size:2.2rem;letter-spacing:8px;}
+        .home-logo p{color:var(--txd);font-size:.75rem;letter-spacing:3px;text-transform:uppercase;margin-top:5px;}
+        .home-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;}
+        .home-btn{display:flex;align-items:center;gap:16px;background:var(--gt);border:1px solid var(--gm);color:var(--gc);padding:20px 20px;border-radius:4px;cursor:pointer;width:100%;text-align:left;}
+        .home-btn:active{background:var(--gm);}
+        .home-btn-icon{font-size:1.5rem;flex-shrink:0;}
+        .home-btn-title{font-family:'Share Tech Mono',monospace;font-size:.95rem;letter-spacing:2px;color:var(--gc);}
+        .home-btn-sub{font-size:.78rem;color:var(--txd);margin-top:2px;}
+
+        /* TABS */
+        .tabs{display:flex;border-bottom:1px solid var(--gm);flex-shrink:0;background:var(--g1);}
+        .tab-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--txd);font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;padding:12px 4px;cursor:pointer;text-transform:uppercase;}
+        .tab-btn.active{color:var(--gc);border-bottom-color:var(--gc);}
+        .tab-btn:active{background:var(--gt);}
+        .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+        .tab-content.active{display:flex;flex-direction:column;}
+        .pad{padding:12px;}
+
+        /* FORM ELEMENTS */
+        .lbl{font-family:'Share Tech Mono',monospace;color:var(--txd);font-size:.68rem;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;margin-top:12px;}
+        .lbl:first-child{margin-top:0;}
+        .inp{width:100%;background:var(--g0);border:1px solid var(--gm);color:var(--tx);font-family:'Rajdhani',monospace;font-size:1rem;padding:10px 12px;border-radius:3px;outline:none;transition:border-color .15s;}
+        .inp:focus{border-color:var(--gc);}
+        .inp::placeholder{color:var(--txd);}
+        textarea.inp{resize:none;min-height:90px;}
+
+        /* BUTTONS */
+        .btn{width:100%;background:var(--gt);border:1px solid var(--gc);color:var(--gc);font-family:'Share Tech Mono',monospace;font-size:.85rem;letter-spacing:2px;padding:13px;border-radius:3px;cursor:pointer;text-transform:uppercase;margin-top:10px;display:block;}
+        .btn:active{background:var(--gm);}
+        .btn.sm{font-size:.72rem;padding:9px;margin-top:7px;}
+        .btn.ghost{border-color:var(--gm);color:var(--txd);background:none;}
+        .btn.ghost:active{background:var(--gt);color:var(--gc);}
+        .btn.danger{border-color:var(--red);color:var(--red);background:rgba(40,0,0,.25);}
+        .btn.danger:active{background:rgba(80,0,0,.4);}
+
+        /* MODE TOGGLE */
+        .mode-toggle{display:flex;border:1px solid var(--gm);border-radius:3px;overflow:hidden;margin-bottom:10px;}
+        .mode-toggle-btn{flex:1;background:none;border:none;color:var(--txd);font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;padding:9px;cursor:pointer;text-transform:uppercase;}
+        .mode-toggle-btn.active{background:var(--gt);color:var(--gc);}
+
+        /* KEYPAD */
+        .keypad{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+        .key{background:var(--g4);border:1px solid var(--gm);color:var(--gc);font-family:'Share Tech Mono',monospace;font-size:1.7rem;padding:16px 0;border-radius:3px;cursor:pointer;text-align:center;}
+        .key:active{background:var(--gm);}
+        .key.sm{font-size:.72rem;padding:13px 0;letter-spacing:1px;}
+        .key.danger{border-color:var(--red);color:var(--red);}
+        .key.danger:active{background:rgba(80,0,0,.4);}
+
+        /* OUTPUT */
+        .out{background:var(--g0);border:1px solid var(--gm);border-radius:3px;padding:12px;min-height:70px;font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--gc);word-break:break-all;line-height:1.6;white-space:pre-wrap;margin-top:8px;}
+        .out.dim{color:var(--txd);}
+
+        /* LEGEND */
+        .legend{display:none;background:var(--g0);border:1px solid var(--gm);border-radius:3px;padding:8px;margin-bottom:10px;max-height:150px;overflow-y:auto;}
+        .legend.show{display:block;}
+        .legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(75px,1fr));gap:3px;}
+        .legend-item{display:flex;justify-content:space-between;padding:2px 5px;}
+        .lc{color:var(--gc);font-family:'Share Tech Mono',monospace;font-size:.75rem;}
+        .lm{color:var(--txd);font-family:'Share Tech Mono',monospace;font-size:.75rem;}
+
+        /* EXPORT */
+        .exp-wrap{position:relative;margin-top:7px;}
+        .exp-dd{display:none;position:absolute;bottom:calc(100% + 3px);right:0;background:var(--g2);border:1px solid var(--gm);border-radius:3px;z-index:100;min-width:130px;}
+        .exp-dd.show{display:block;}
+        .exp-item{padding:10px 14px;color:var(--gc);font-size:.82rem;cursor:pointer;font-family:'Rajdhani',sans-serif;}
+        .exp-item:active{background:var(--gt);}
+
+        /* AUDIO */
+        .drop-zone{border:1px dashed var(--gm);border-radius:3px;padding:28px 16px;text-align:center;cursor:pointer;}
+        .drop-zone:active,.drop-zone.drag-over{background:var(--gt);border-color:var(--gc);}
+        .drop-zone p{color:var(--txd);font-size:.85rem;}
+        .drop-zone small{color:#223322;font-size:.75rem;}
+        .ast{text-align:center;padding:6px 10px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.72rem;margin-top:7px;display:none;}
+        .ast.proc{color:#aacc00;background:rgba(80,100,0,.15);animation:blink 1s infinite;}
+        .ast.done{color:var(--gc);background:var(--gt);}
+        .ast.err{color:var(--red);background:rgba(60,0,0,.15);}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+        audio{width:100%;margin-top:7px;}
+        .sel{background:var(--g0);border:1px solid var(--gm);color:var(--gc);font-family:'Rajdhani',sans-serif;font-size:.95rem;padding:8px 10px;border-radius:3px;width:100%;outline:none;margin-top:3px;}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+
+        /* TRIANGOLAZIONE */
+        .coord-toggle{display:flex;border:1px solid var(--gm);border-radius:3px;overflow:hidden;}
+        .ctbtn{flex:1;background:none;border:none;color:var(--txd);font-family:'Share Tech Mono',monospace;font-size:.72rem;padding:10px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
+        .ctbtn.active{background:var(--gt);color:var(--gc);}
+        .utm-hint{display:none;background:var(--gt);border:1px solid var(--gm);border-radius:3px;padding:7px 11px;margin-top:7px;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--txd);}
+        .utm-hint span{color:var(--gc);}
+        .station-lbl{font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+        .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+        .utm-prev{font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:3px 7px;border-radius:2px;margin-top:3px;min-height:17px;}
+        .utm-prev.ok{color:var(--gc);background:var(--gt);}
+        .utm-prev.err{color:var(--red);background:rgba(50,0,0,.2);}
+        .station-card{background:var(--g1);border:1px solid var(--gm);border-radius:4px;padding:12px;margin-bottom:8px;}
+
+        /* RESULT */
+        .result-block{background:var(--g0);border:1px solid var(--gc);border-radius:4px;padding:14px;margin-bottom:8px;display:none;}
+        .result-block.show{display:block;}
+        .result-title{font-family:'Share Tech Mono',monospace;color:var(--gc);font-size:.72rem;letter-spacing:2px;text-align:center;margin-bottom:12px;}
+        .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+        .ri{background:var(--gt);border:1px solid var(--gm);border-radius:3px;padding:9px;text-align:center;}
+        .ri-lbl{font-family:'Share Tech Mono',monospace;color:var(--txd);font-size:.62rem;letter-spacing:1px;margin-bottom:3px;}
+        .ri-val{font-family:'Share Tech Mono',monospace;color:var(--gc);font-size:.95rem;}
+        .ri.utm{border-color:var(--gc);}
+        .ri.utm .ri-val{color:var(--gl);}
+        .result-error{color:var(--red);font-family:'Share Tech Mono',monospace;font-size:.8rem;text-align:center;padding:12px;}
+        .maps-btn{display:block;text-decoration:none;text-align:center;border:1px solid var(--gc);color:var(--gc);padding:11px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:2px;margin-top:10px;background:var(--gt);}
+        .maps-btn:active{background:var(--gm);}
+
+        /* MAP */
+        .map-wrap{background:var(--g0);border:1px solid var(--gm);border-radius:4px;overflow:hidden;display:none;margin-bottom:8px;}
+        #triagCanvas{display:block;width:100%;}
+        .map-legend{display:flex;gap:10px;justify-content:center;padding:7px;flex-wrap:wrap;}
+        .mli{display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--txd);font-family:'Share Tech Mono',monospace;}
+        .mld{width:7px;height:7px;border-radius:50%;}
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar{width:3px;}
+        ::-webkit-scrollbar-track{background:var(--g0);}
+        ::-webkit-scrollbar-thumb{background:var(--gm);border-radius:2px;}
+
+        /* MINI RESET */
+        .mini-reset{background:none;border:1px solid var(--red);color:var(--red);font-size:.75rem;width:30px;height:30px;border-radius:3px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+        .mini-reset:active{background:rgba(150,0,0,.3);}
+        .utm-fixed{color:var(--gc);font-family:'Share Tech Mono',monospace;font-size:.85rem;}
+    </style>
+</head>
+<body>
+
+<!-- ═══════ HOME ═══════ -->
+<div id="homePage" class="page active">
+    <div class="home-wrap">
+        <div class="home-logo">
+            <h1>JSOC</h1>
+            <p>Suite Operativa</p>
+        </div>
+        <div class="home-btns">
+            <button class="home-btn" onclick="showPage('encodePage')">
+                <span class="home-btn-icon">📡</span>
+                <div>
+                    <div class="home-btn-title">ENCODE</div>
+                    <div class="home-btn-sub">Morse · Binary · Audio</div>
+                </div>
+            </button>
+            <button class="home-btn" onclick="showPage('triagPage')">
+                <span class="home-btn-icon">🎯</span>
+                <div>
+                    <div class="home-btn-title">TRIANGOLAZIONE</div>
+                    <div class="home-btn-sub">UTM · Lat/Lon · Azimut</div>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ ENCODE ═══════ -->
+<div id="encodePage" class="page">
+    <div class="topbar">
+        <button class="back-btn" onclick="showPage('homePage')">← HOME</button>
+        <span class="topbar-title">ENCODE</span>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('morse')" id="tabMorse">MORSE</button>
+        <button class="tab-btn" onclick="switchTab('binary')" id="tabBinary">BINARY</button>
+        <button class="tab-btn" onclick="switchTab('audio')" id="tabAudio">AUDIO</button>
+    </div>
+
+    <!-- MORSE -->
+    <div id="morse" class="tab-content active">
+        <div class="pad">
+            <button class="btn ghost sm" onclick="toggleLegend()">LEGENDA MORSE</button>
+            <div class="legend" id="morseLegend"><div class="legend-grid" id="legendGrid"></div></div>
+
+            <div class="mode-toggle" style="margin-top:10px;">
+                <button class="mode-toggle-btn active" id="morseModeBtn" onclick="switchMorseMode()">MORSE → TEXT</button>
+            </div>
+
+            <span class="lbl" id="morseInputLabel">MORSE INPUT</span>
+            <textarea class="inp" id="morseInput" placeholder="Inserisci morse..."></textarea>
+
+            <div class="keypad" id="morseKeypad">
+                <button class="key" onclick="appendToInput('morse','.')">·</button>
+                <button class="key" onclick="appendToInput('morse','-')">—</button>
+                <button class="key sm" onclick="appendToInput('morse',' ')">LETTERA</button>
+                <button class="key sm" onclick="appendToInput('morse',' / ')">SPAZIO</button>
+            </div>
+
+            <button class="btn" onclick="convertMorse()">CONVERTI</button>
+            <button class="btn danger sm" onclick="clearInput('morse')">CANCELLA</button>
+
+            <span class="lbl" id="morseOutputLabel" style="margin-top:14px;">OUTPUT</span>
+            <div class="out dim" id="morseOutput">Output qui...</div>
+
+            <div class="exp-wrap">
+                <button class="btn ghost sm" onclick="toggleExp('morse')">⬆ EXPORT</button>
+                <div class="exp-dd" id="morseExpDd">
+                    <div class="exp-item" onclick="exportData('morse','txt')">Salva .TXT</div>
+                    <div class="exp-item" onclick="exportData('morse','json')">Salva .JSON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BINARY -->
+    <div id="binary" class="tab-content">
+        <div class="pad">
+            <div class="mode-toggle">
+                <button class="mode-toggle-btn active" id="binaryModeBtn" onclick="switchBinaryMode()">TEXT → BINARY</button>
+            </div>
+
+            <span class="lbl" id="binaryInputLabel">TEXT INPUT</span>
+            <textarea class="inp" id="binaryInput" placeholder="Inserisci testo..."></textarea>
+
+            <div class="keypad" id="binaryKeypad" style="display:none;">
+                <button class="key" onclick="appendToInput('binary','0')">0</button>
+                <button class="key" onclick="appendToInput('binary','1')">1</button>
+                <button class="key sm" onclick="appendToInput('binary',' ')">SPAZIO</button>
+                <button class="key sm danger" onclick="clearInput('binary')">CANCELLA</button>
+            </div>
+
+            <button class="btn" onclick="convertBinary()">CONVERTI</button>
+            <button class="btn danger sm" onclick="clearInput('binary')">CANCELLA</button>
+
+            <span class="lbl" id="binaryOutputLabel" style="margin-top:14px;">OUTPUT</span>
+            <div class="out dim" id="binaryOutput">Output qui...</div>
+
+            <div class="exp-wrap">
+                <button class="btn ghost sm" onclick="toggleExp('binary')">⬆ EXPORT</button>
+                <div class="exp-dd" id="binaryExpDd">
+                    <div class="exp-item" onclick="exportData('binary','txt')">Salva .TXT</div>
+                    <div class="exp-item" onclick="exportData('binary','json')">Salva .JSON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO -->
+    <div id="audio" class="tab-content">
+        <div class="pad">
+            <div class="drop-zone" id="audioDropZone" onclick="document.getElementById('audioFileInput').click()">
+                <p>Tocca per caricare audio</p>
+                <small>MP3 · WAV · OGG · M4A · AAC</small>
+            </div>
+            <input type="file" id="audioFileInput" accept="audio/*" style="display:none;">
+
+            <div id="audioPlayerContainer" style="display:none;margin-top:10px;">
+                <span class="lbl">FILE</span>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.78rem;color:var(--gc);margin-bottom:3px;word-break:break-all;" id="audioFileName">—</div>
+                <audio id="audioPlayer" controls></audio>
+            </div>
+
+            <div class="row2">
+                <div>
+                    <span class="lbl">OUTPUT</span>
+                    <select class="sel" id="audioOutputFormat">
+                        <option value="text">Testo</option>
+                        <option value="morse">Morse</option>
+                        <option value="binary">Binario</option>
+                    </select>
+                </div>
+                <div>
+                    <span class="lbl">LINGUA</span>
+                    <select class="sel" id="audioLanguage">
+                        <option value="it-IT">Italiano</option>
+                        <option value="en-US">Inglese</option>
+                        <option value="fr-FR">Francese</option>
+                        <option value="de-DE">Tedesco</option>
+                        <option value="es-ES">Spagnolo</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn" id="micBtn" onclick="toggleMic()" style="border-color:#557700;color:#aacc00;background:rgba(40,60,0,.2);">
+                🎤 REGISTRA MICROFONO
+            </button>
+            <div class="ast" id="micStatus"></div>
+
+            <button class="btn" id="audioConvertBtn" onclick="convertAudioFile()" disabled>▶ CONVERTI FILE</button>
+            <div class="ast" id="audioStatus"></div>
+
+            <span class="lbl" style="margin-top:14px;">OUTPUT</span>
+            <div class="out dim" id="audioOutputBox">Il testo convertito apparirà qui...</div>
+            <button class="btn ghost sm" onclick="copyAudioOutput()">📋 COPIA</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ TRIANGOLAZIONE ═══════ -->
+<div id="triagPage" class="page">
+    <div class="topbar">
+        <button class="back-btn" onclick="showPage('homePage')">← HOME</button>
+        <span class="topbar-title">TRIANGOLAZIONE</span>
+    </div>
+    <div class="scroll">
+        <div class="pad">
+
+            <!-- S1 -->
+            <div class="station-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div class="station-lbl" style="margin-bottom:0;">
+                        <div class="sdot" style="background:#4dff88;"></div>
+                        <span style="color:#4dff88;">STAZIONE 01</span>
+                    </div>
+                    <button class="mini-reset" onclick="resetStation(1)" title="Reset stazione 1">✕</button>
+                </div>
+                <span class="lbl" style="margin-top:0;">COORDINATE UTM</span>
+                <input type="text" class="inp utm-fixed" id="s1utm"
+                    value="33T 0701270 4500299"
+                    autocomplete="off" spellcheck="false"
+                    oninput="onUTMInput(1)"
+                    style="text-transform:uppercase;letter-spacing:1px;">
+                <div class="utm-prev" id="s1utmPreview"></div>
+                <span class="lbl">AZIMUT (°)</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" class="inp" id="s1az" placeholder="0 – 360" step="any" style="flex:1;">
+                    <button class="mini-reset" onclick="clearAz(1)" title="Cancella azimut">✕</button>
+                </div>
+            </div>
+
+            <!-- S2 -->
+            <div class="station-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div class="station-lbl" style="margin-bottom:0;">
+                        <div class="sdot" style="background:#88cc44;"></div>
+                        <span style="color:#88cc44;">STAZIONE 02</span>
+                    </div>
+                    <button class="mini-reset" onclick="resetStation(2)" title="Reset stazione 2">✕</button>
+                </div>
+                <span class="lbl" style="margin-top:0;">COORDINATE UTM</span>
+                <input type="text" class="inp utm-fixed" id="s2utm"
+                    value="33T 0699642 4501048"
+                    autocomplete="off" spellcheck="false"
+                    oninput="onUTMInput(2)"
+                    style="text-transform:uppercase;letter-spacing:1px;">
+                <div class="utm-prev" id="s2utmPreview"></div>
+                <span class="lbl">AZIMUT (°)</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" class="inp" id="s2az" placeholder="0 – 360" step="any" style="flex:1;">
+                    <button class="mini-reset" onclick="clearAz(2)" title="Cancella azimut">✕</button>
+                </div>
+            </div>
+
+            <!-- S3 -->
+            <div class="station-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div class="station-lbl" style="margin-bottom:0;">
+                        <div class="sdot" style="background:#44aa66;"></div>
+                        <span style="color:#44aa66;">STAZIONE 03</span>
+                    </div>
+                    <button class="mini-reset" onclick="resetStation(3)" title="Reset stazione 3">✕</button>
+                </div>
+                <span class="lbl" style="margin-top:0;">COORDINATE UTM</span>
+                <input type="text" class="inp utm-fixed" id="s3utm"
+                    value="33T 0700245 4499511"
+                    autocomplete="off" spellcheck="false"
+                    oninput="onUTMInput(3)"
+                    style="text-transform:uppercase;letter-spacing:1px;">
+                <div class="utm-prev" id="s3utmPreview"></div>
+                <span class="lbl">AZIMUT (°)</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" class="inp" id="s3az" placeholder="0 – 360" step="any" style="flex:1;">
+                    <button class="mini-reset" onclick="clearAz(3)" title="Cancella azimut">✕</button>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:4px;">
+                <button class="btn" style="flex:3;margin-top:0;" onclick="calculateTriangulation()">CALCOLA</button>
+                <button class="btn danger sm" style="flex:1;margin-top:0;" onclick="clearTriag()">RESET</button>
+            </div>
+
+            <div class="result-block" id="triagResult">
+                <div class="result-title">— PUNTO STIMATO —</div>
+                <div id="triagResultContent"></div>
+            </div>
+
+            <div class="map-wrap" id="triagMapWrapper">
+                <canvas id="triagCanvas" height="260"></canvas>
+                <div class="map-legend">
+                    <div class="mli"><div class="mld" style="background:#4dff88;"></div>S01</div>
+                    <div class="mli"><div class="mld" style="background:#88cc44;"></div>S02</div>
+                    <div class="mli"><div class="mld" style="background:#44aa66;"></div>S03</div>
+                    <div class="mli"><div class="mld" style="background:#00ff66;"></div>TARGET</div>
+                </div>
+            </div>
+
+            <div style="height:16px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── NAV ──
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+// ── MORSE MAPS ──
+const MCM={'.-':'A','-...':'B','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z','.----':'1','..---':'2','...--':'3','....-':'4','.....':'5','-....':'6','--...':'7','---..':'8','----.':'9','-----':'0','.-.-.-':'.','--..--':',','..--..':'?','.----.':'\'','-.-.--':'!','-..-.':'/','.-...':'&','---...':':','-.-.-.':';','-...-':'=','.-.-.':'+','-....-':'-','..--.-':'_','.-..-.':'"','.--.-.':'@'};
+const RMCM={};for(let k in MCM)RMCM[MCM[k]]=k;
+let morseMode='morse-to-text',binaryMode='text-to-binary';
+
+// ── TABS ──
+function switchTab(tab){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById('tab'+tab[0].toUpperCase()+tab.slice(1)).classList.add('active');}
+
+// ── MORSE ──
+function switchMorseMode(){
+    const btn=document.getElementById('morseModeBtn'),inp=document.getElementById('morseInput'),kp=document.getElementById('morseKeypad'),il=document.getElementById('morseInputLabel');
+    if(morseMode==='morse-to-text'){morseMode='text-to-morse';btn.textContent='TEXT → MORSE';il.textContent='TEXT INPUT';inp.placeholder='Inserisci testo...';kp.style.display='none';}
+    else{morseMode='morse-to-text';btn.textContent='MORSE → TEXT';il.textContent='MORSE INPUT';inp.placeholder='Inserisci morse...';kp.style.display='grid';}
+    inp.value='';setOut('morseOutput','Output qui...');
+}
+function switchBinaryMode(){
+    const btn=document.getElementById('binaryModeBtn'),inp=document.getElementById('binaryInput'),kp=document.getElementById('binaryKeypad'),il=document.getElementById('binaryInputLabel');
+    if(binaryMode==='text-to-binary'){binaryMode='binary-to-text';btn.textContent='BINARY → TEXT';il.textContent='BINARY INPUT';inp.placeholder='Inserisci binario...';kp.style.display='grid';}
+    else{binaryMode='text-to-binary';btn.textContent='TEXT → BINARY';il.textContent='TEXT INPUT';inp.placeholder='Inserisci testo...';kp.style.display='none';}
+    inp.value='';setOut('binaryOutput','Output qui...');
+}
+function appendToInput(t,c){const el=document.getElementById(t==='morse'?'morseInput':'binaryInput');el.value+=c;}
+function clearInput(t){document.getElementById(t+'Input').value='';setOut(t+'Output','Output qui...');}
+function convertMorse(){
+    const v=document.getElementById('morseInput').value.trim();
+    try{let r;if(morseMode==='morse-to-text'){r=v.split('/').map(w=>w.trim().split(' ').filter(l=>l).map(c=>MCM[c.trim()]||'?').join('')).join(' ');}else{r=v.toUpperCase().split(' ').map(w=>w.split('').map(c=>RMCM[c]||'?').join(' ')).join(' / ');}setOut('morseOutput',r||'—');}catch(e){setOut('morseOutput','Errore');}
+}
+function convertBinary(){
+    const v=document.getElementById('binaryInput').value.trim();
+    try{let r;if(binaryMode==='text-to-binary'){r=v.split('').map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');}else{r=v.split(/\s+/).map(b=>String.fromCharCode(parseInt(b,2))).join('');}setOut('binaryOutput',r||'—');}catch(e){setOut('binaryOutput','Errore');}
+}
+function setOut(id,txt){const el=document.getElementById(id);el.textContent=txt;el.classList.toggle('dim',txt==='Output qui...'||txt==='Il testo convertito apparirà qui...');}
+function toggleLegend(){const l=document.getElementById('morseLegend');l.classList.toggle('show');if(l.classList.contains('show')&&!document.getElementById('legendGrid').children.length){const g=document.getElementById('legendGrid');for(let k in MCM){const d=document.createElement('div');d.className='legend-item';d.innerHTML=`<span class="lc">${MCM[k]}</span><span class="lm">${k}</span>`;g.appendChild(d);}}}
+function toggleExp(t){const d=document.getElementById(t+'ExpDd');d.classList.toggle('show');const o=t==='morse'?'binary':'morse';document.getElementById(o+'ExpDd').classList.remove('show');}
+document.addEventListener('click',e=>{if(!e.target.closest('.exp-wrap'))document.querySelectorAll('.exp-dd').forEach(d=>d.classList.remove('show'));});
+function exportData(t,fmt){const i=document.getElementById(t+'Input').value,o=document.getElementById(t+'Output').textContent;let c=t.toUpperCase()+' CONVERSION\n\nInput:\n'+i+'\n\nOutput:\n'+o;fmt==='txt'?dlFile(c,t+'-conversion.txt','text/plain'):dlFile(JSON.stringify({type:t,input:i,output:o,timestamp:new Date().toISOString()},null,2),t+'-conversion.json','application/json');toggleExp(t);}
+function dlFile(c,n,m){const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([c],{type:m})),download:n});document.body.appendChild(a);a.click();document.body.removeChild(a);}
+
+// ── AUDIO ──
+let audioFile=null,micRec=null,micActive=false;
+const dz=document.getElementById('audioDropZone'),fi=document.getElementById('audioFileInput');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('audio/'))loadAudio(f);});
+fi.addEventListener('change',e=>{if(e.target.files[0])loadAudio(e.target.files[0]);});
+function loadAudio(f){audioFile=f;document.getElementById('audioFileName').textContent=f.name;document.getElementById('audioPlayer').src=URL.createObjectURL(f);document.getElementById('audioPlayerContainer').style.display='block';document.getElementById('audioConvertBtn').disabled=false;setSt('audioStatus','','');setOut('audioOutputBox','File caricato. Premi CONVERTI FILE.');}
+function setSt(id,msg,cls){const el=document.getElementById(id);if(!msg){el.style.display='none';return;}el.textContent=msg;el.className='ast '+cls;el.style.display='block';}
+function convertAudioFile(){
+    if(!audioFile)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){setSt('audioStatus','⚠ Usa Chrome','err');return;}
+    const r=new SR();r.lang=document.getElementById('audioLanguage').value;r.continuous=true;r.interimResults=true;let final='';
+    setSt('audioStatus','● In ascolto...','proc');
+    r.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}setOut('audioOutputBox',(final+interim).trim()||'...');};
+    r.onerror=e=>setSt('audioStatus','✖ '+e.error,'err');
+    r.onend=()=>{setSt('audioStatus','✓ Completato','done');processAudio(final.trim());};
+    r.start();document.getElementById('audioPlayer').play();document.getElementById('audioPlayer').onended=()=>r.stop();
+}
+function toggleMic(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition,btn=document.getElementById('micBtn');
+    if(!SR){setSt('micStatus','⚠ Usa Chrome','err');return;}
+    if(micActive){micRec.stop();return;}
+    micRec=new SR();micRec.lang=document.getElementById('audioLanguage').value;micRec.continuous=true;micRec.interimResults=true;let final='';
+    btn.textContent='⏹ FERMA';setSt('micStatus','● Registrazione...','proc');micActive=true;
+    micRec.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}setOut('audioOutputBox',(final+interim).trim()||'...');};
+    micRec.onend=()=>{micActive=false;btn.textContent='🎤 REGISTRA MICROFONO';setSt('micStatus','✓ Completato','done');processAudio(final.trim());};
+    micRec.start();
+}
+function processAudio(text){
+    if(!text){setOut('audioOutputBox','Nessun testo rilevato.');return;}
+    const fmt=document.getElementById('audioOutputFormat').value;
+    if(fmt==='text')setOut('audioOutputBox',text);
+    else if(fmt==='morse')setOut('audioOutputBox',text.toUpperCase().split(' ').map(w=>w.split('').map(c=>RMCM[c]||'?').join(' ')).join(' / '));
+    else setOut('audioOutputBox',text.split('').map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '));
+}
+function copyAudioOutput(){navigator.clipboard.writeText(document.getElementById('audioOutputBox').textContent);}
+
+// ── TRIANGOLAZIONE ──
+const d2r=d=>d*Math.PI/180,r2d=r=>r*180/Math.PI;
+const UNORTH='NPQRSTUVWX';
+// Default coords per stazione
+const DEFAULT_UTM={1:'33T 0701270 4500299',2:'33T 0699642 4501048',3:'33T 0700245 4499511'};
+
+function parseUTM(s){
+    if(!s)return null;
+    const m=s.trim().toUpperCase().match(/^(\d{1,2})\s*([A-Z])\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)$/);
+    if(!m)return null;
+    const z=parseInt(m[1]);if(z<1||z>60)return null;
+    return{zone:z,band:m[2],easting:parseFloat(m[3]),northing:parseFloat(m[4]),isNorth:UNORTH.includes(m[2])};
+}
+
+function onUTMInput(i){
+    const v=document.getElementById('s'+i+'utm').value,p=document.getElementById('s'+i+'utmPreview');
+    if(!v.trim()){p.textContent='';p.className='utm-prev';return;}
+    const u=parseUTM(v);
+    if(!u){p.textContent='⚠ Formato: 33T 0701270 4500299';p.className='utm-prev err';}
+    else{const ll=utm2ll(u.easting,u.northing,u.zone,u.isNorth);p.textContent=`✓ ${u.zone}${u.band} → ${ll.lat.toFixed(5)}°, ${ll.lon.toFixed(5)}°`;p.className='utm-prev ok';}
+}
+
+// Reset singola stazione (ripristina UTM default, cancella azimut)
+function resetStation(i){
+    document.getElementById('s'+i+'utm').value=DEFAULT_UTM[i];
+    document.getElementById('s'+i+'az').value='';
+    onUTMInput(i);
+}
+
+// Cancella solo azimut
+function clearAz(i){
+    document.getElementById('s'+i+'az').value='';
+}
+
+function utm2ll(E,N,zone,isNorth){
+    const a=6378137,f=1/298.257223563,b=a*(1-f),e2=1-(b*b)/(a*a),ep2=e2/(1-e2),k0=0.9996;
+    const x=E-500000,y=N-(isNorth?0:10000000),lon0=(zone-1)*6-180+3;
+    const M=y/k0,mu=M/(a*(1-e2/4-3*e2*e2/64-5*e2*e2*e2/256));
+    const e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+    const p1=mu+(3*e1/2-27*e1**3/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1**4/32)*Math.sin(4*mu)+(151*e1**3/96)*Math.sin(6*mu);
+    const N1=a/Math.sqrt(1-e2*Math.sin(p1)**2),T1=Math.tan(p1)**2,C1=ep2*Math.cos(p1)**2;
+    const R1=a*(1-e2)/(1-e2*Math.sin(p1)**2)**1.5,D=x/(N1*k0);
+    const lat=p1-(N1*Math.tan(p1)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*D**4/24+(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*D**6/720);
+    const lon=d2r(lon0)+(D-(1+2*T1+C1)*D**3/6+(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*D**5/120)/Math.cos(p1);
+    return{lat:r2d(lat),lon:r2d(lon)};
+}
+
+function ll2utm(lat,lon){
+    const a=6378137,f=1/298.257223563,b=a*(1-f),e2=1-(b*b)/(a*a),ep2=e2/(1-e2),k0=0.9996;
+    const phi=d2r(lat),lam=d2r(lon),zone=Math.floor((lon+180)/6)+1,lam0=d2r((zone-1)*6-180+3);
+    const N=a/Math.sqrt(1-e2*Math.sin(phi)**2),T=Math.tan(phi)**2,C=ep2*Math.cos(phi)**2,A=Math.cos(phi)*(lam-lam0);
+    const M=a*((1-e2/4-3*e2*e2/64-5*e2**3/256)*phi-(3*e2/8+3*e2*e2/32+45*e2**3/1024)*Math.sin(2*phi)+(15*e2*e2/256+45*e2**3/1024)*Math.sin(4*phi)-(35*e2**3/3072)*Math.sin(6*phi));
+    const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+500000;
+    const Nv=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
+    return{easting:E,northing:lat>=0?Nv:Nv+10000000,zone,hemi:lat>=0?'N':'S'};
+}
+
+function getStations(){
+    const st=[];
+    for(let i=1;i<=3;i++){
+        const az=parseFloat(document.getElementById('s'+i+'az').value);
+        if(isNaN(az))return null;
+        const u=parseUTM(document.getElementById('s'+i+'utm').value);
+        if(!u)return null;
+        const ll=utm2ll(u.easting,u.northing,u.zone,u.isNorth);
+        st.push({lat:ll.lat,lon:ll.lon,az});
+    }
+    return st;
+}
+
+function bliIntersect(la1,lo1,az1,la2,lo2,az2){
+    // Intersezione 2D nel piano locale (metrica) - accurata < 1m fino a 50km
+    const R=6378137;
+    const lat0=(la1+la2)/2, lon0=(lo1+lo2)/2;
+    const cosLat=Math.cos(d2r(lat0));
+    const x1=(lo1-lon0)*d2r(1)*R*cosLat, y1=(la1-lat0)*d2r(1)*R;
+    const x2=(lo2-lon0)*d2r(1)*R*cosLat, y2=(la2-lat0)*d2r(1)*R;
+    const dx1=Math.sin(d2r(az1)), dy1=Math.cos(d2r(az1));
+    const dx2=Math.sin(d2r(az2)), dy2=Math.cos(d2r(az2));
+    const det=dx1*(-dy2)-dy1*(-dx2);
+    if(Math.abs(det)<1e-10)return null;
+    const ddx=x2-x1, ddy=y2-y1;
+    const t=(ddx*(-dy2)-ddy*(-dx2))/det;
+    const s=(ddx*(-dy1)-ddy*(-dx1))/det;
+    if(t<0||s<0)return null;
+    const ix=x1+t*dx1, iy=y1+t*dy1;
+    return{lat:lat0+iy/R*r2d(1), lon:lon0+ix/(R*cosLat)*r2d(1)};
+}
+
+function calculateTriangulation(){
+    const s=getStations();
+    if(!s){showRes('<div class="result-error">⚠ Inserisci l\'azimut per tutte e 3 le stazioni</div>');return;}
+    const pts=[bliIntersect(s[0].lat,s[0].lon,s[0].az,s[1].lat,s[1].lon,s[1].az),bliIntersect(s[0].lat,s[0].lon,s[0].az,s[2].lat,s[2].lon,s[2].az),bliIntersect(s[1].lat,s[1].lon,s[1].az,s[2].lat,s[2].lon,s[2].az)].filter(p=>p&&isFinite(p.lat)&&isFinite(p.lon));
+    if(!pts.length){showRes('<div class="result-error">✖ Nessuna intersezione. Controlla gli azimut.</div>');return;}
+    const c={lat:pts.reduce((a,p)=>a+p.lat,0)/pts.length,lon:pts.reduce((a,p)=>a+p.lon,0)/pts.length};
+    const utm=ll2utm(c.lat,c.lon);
+    const utmStr=`${utm.zone}T ${Math.round(utm.easting)} ${Math.round(utm.northing)}`;
+    showRes(`
+        <div style="background:var(--gt);border:1px solid var(--gc);border-radius:4px;padding:14px;text-align:center;margin-bottom:10px;">
+            <div style="font-family:'Share Tech Mono',monospace;color:var(--txd);font-size:.65rem;letter-spacing:2px;margin-bottom:6px;">UTM WGS84</div>
+            <div style="font-family:'Share Tech Mono',monospace;color:var(--gl);font-size:1.25rem;letter-spacing:2px;word-break:break-all;" id="utmResultStr">${utmStr}</div>
+            <button onclick="copyUTM()" style="margin-top:10px;background:none;border:1px solid var(--gm);color:var(--txd);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 14px;border-radius:3px;cursor:pointer;letter-spacing:1px;" id="copyUTMBtn">📋 COPIA</button>
+        </div>
+        <div class="result-grid">
+            <div class="ri"><div class="ri-lbl">LATITUDINE</div><div class="ri-val">${c.lat.toFixed(6)}°</div></div>
+            <div class="ri"><div class="ri-lbl">LONGITUDINE</div><div class="ri-val">${c.lon.toFixed(6)}°</div></div>
+            <div class="ri"><div class="ri-lbl">EASTING</div><div class="ri-val">${Math.round(utm.easting)}</div></div>
+            <div class="ri"><div class="ri-lbl">NORTHING</div><div class="ri-val">${Math.round(utm.northing)}</div></div>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--txd);text-align:center;margin-bottom:6px;">${pts.length}/3 intersezioni valide</div>
+        <a class="maps-btn" href="https://maps.google.com/?q=${c.lat},${c.lon}" target="_blank">APRI IN GOOGLE MAPS</a>
+    `);
+    drawMap(s,c);
+}
+
+function showRes(html){document.getElementById('triagResultContent').innerHTML=html;document.getElementById('triagResult').classList.add('show');}
+
+function copyUTM(){
+    const txt=document.getElementById('utmResultStr')?.textContent;
+    if(!txt)return;
+    navigator.clipboard.writeText(txt).then(()=>{
+        const btn=document.getElementById('copyUTMBtn');
+        if(btn){btn.textContent='✓ COPIATO';setTimeout(()=>btn.textContent='📋 COPIA',2000);}
+    });
+}
+
+function drawMap(stations,centroid){
+    const wrap=document.getElementById('triagMapWrapper');wrap.style.display='block';
+    const cv=document.getElementById('triagCanvas');cv.width=wrap.offsetWidth;cv.height=260;
+    const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    const alat=stations.map(s=>s.lat).concat([centroid.lat]),alon=stations.map(s=>s.lon).concat([centroid.lon]);
+    const mnla=Math.min(...alat),mxla=Math.max(...alat),mnlo=Math.min(...alon),mxlo=Math.max(...alon);
+    const lr=(mxla-mnla)||.01,lor=(mxlo-mnlo)||.01,pad=Math.max(lr,lor)*.3;
+    const tc=(lat,lon)=>({x:(lon-(mnlo-pad))/(lor+2*pad)*W,y:H-(lat-(mnla-pad))/(lr+2*pad)*H});
+    ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#0a140a';ctx.lineWidth=1;
+    for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(W/8*i,0);ctx.lineTo(W/8*i,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,H/8*i);ctx.lineTo(W,H/8*i);ctx.stroke();}
+    const cols=['#4dff88','#88cc44','#44aa66'];
+    ctx.setLineDash([5,4]);
+    stations.forEach((s,i)=>{const p=tc(s.lat,s.lon),az=d2r(s.az),len=Math.max(W,H)*2;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+Math.sin(az)*len,p.y-Math.cos(az)*len);ctx.strokeStyle=cols[i]+'55';ctx.lineWidth=1.5;ctx.stroke();});
+    ctx.setLineDash([]);
+    stations.forEach((s,i)=>{const p=tc(s.lat,s.lon);ctx.beginPath();ctx.arc(p.x,p.y,6,0,2*Math.PI);ctx.fillStyle=cols[i];ctx.fill();ctx.fillStyle='#000';ctx.font='bold 9px monospace';ctx.fillText('S0'+(i+1),p.x+8,p.y+3);});
+    const cp=tc(centroid.lat,centroid.lon);
+    ctx.beginPath();ctx.arc(cp.x,cp.y,9,0,2*Math.PI);ctx.fillStyle='#00ff66';ctx.fill();
+    ctx.strokeStyle='#00ff6633';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cp.x-17,cp.y);ctx.lineTo(cp.x+17,cp.y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cp.x,cp.y-17);ctx.lineTo(cp.x,cp.y+17);ctx.stroke();
+    ctx.fillStyle='#00ff66';ctx.font='bold 9px monospace';ctx.fillText('TARGET',cp.x+13,cp.y-5);
+}
+
+// Reset tutto (azimut + ripristina UTM default, nasconde risultati)
+function clearTriag(){
+    for(let i=1;i<=3;i++){
+        document.getElementById('s'+i+'utm').value=DEFAULT_UTM[i];
+        document.getElementById('s'+i+'az').value='';
+        onUTMInput(i);
+    }
+    document.getElementById('triagResult').classList.remove('show');
+    document.getElementById('triagMapWrapper').style.display='none';
+}
+
+// Avvia preview UTM al caricamento
+document.addEventListener('DOMContentLoaded',()=>{onUTMInput(1);onUTMInput(2);onUTMInput(3);});
+</script>
+</body>
+</html>
